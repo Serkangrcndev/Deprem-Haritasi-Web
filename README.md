@@ -61,8 +61,6 @@ api\run_cron.bat
 ## Geliştirici
 
 **Serkan Gürcan**  
-Yozgat Bozok Üniversitesi / Sorgun Meslek Yüksek Okulu  
-Bilgisayar Programcılığı - Dönem Sonu Projesi
 
 ## Lisans
 
@@ -72,4 +70,5 @@ Bu proje eğitim amaçlı geliştirilmiştir.
 
 - Kandilli Rasathanesi
 - USGS (United States Geological Survey)
+
 
