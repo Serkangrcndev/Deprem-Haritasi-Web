@@ -1,0 +1,32 @@
+# Cache dosyaları
+cache/*.json
+cache/*.txt
+!cache/.htaccess
+
+# Log dosyaları
+*.log
+
+# IDE dosyaları
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS dosyaları
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Geçici dosyalar
+*.tmp
+*.temp
+
+# Backup dosyaları
+*.bak
+*.backup
+
+# Environment dosyaları
+.env
+.env.local
+

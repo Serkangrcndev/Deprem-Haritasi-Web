@@ -1,0 +1,86 @@
+RewriteEngine On
+
+# Shell ve zararlı dosya uzantılarını engelle (sadece upload klasörlerinde - eğer varsa)
+# Not: Bu kural sadece uploads, tmp, temp gibi klasörlerde aktif olacak
+
+# Config ve cache klasörlerini koru (sadece PHP dosyalarına erişimi engelle)
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_URI} ^/(config|cache|modules)/.*\.php$ [NC]
+    RewriteRule ^(.*)$ - [F,L]
+</IfModule>
+
+# Zararlı query string parametrelerini engelle (sadece açık saldırı pattern'leri)
+RewriteCond %{QUERY_STRING} (eval\(|base64_decode.*\(|shell_exec|passthru|proc_open|popen|system\(|phpinfo\(|\.\./|\.\.\\) [NC,OR]
+RewriteCond %{QUERY_STRING} (union.*select.*from|insert.*into.*values|delete.*from.*where|drop.*table|truncate.*table) [NC,OR]
+RewriteCond %{QUERY_STRING} (<script|javascript:.*alert|on\w+\s*=.*javascript) [NC,OR]
+RewriteCond %{QUERY_STRING} (boot\.ini|etc/passwd|/etc/environ) [NC]
+RewriteRule ^(.*)$ - [F,L]
+
+# User-Agent bazlı bot koruması (sadece açık saldırı araçları)
+RewriteCond %{HTTP_USER_AGENT} (nikto|sqlmap|masscan) [NC]
+RewriteRule ^(.*)$ - [F,L]
+
+# DDoS koruması - Çok fazla istek
+<IfModule mod_evasive20.c>
+    DOSHashTableSize    2048
+    DOSPageCount        10
+    DOSSiteCount        50
+    DOSPageInterval     1
+    DOSSiteInterval     1
+    DOSBlockingPeriod   600
+</IfModule>
+
+# Rate limiting için mod_ratelimit (varsa)
+<IfModule mod_ratelimit.c>
+    <Location />
+        SetOutputFilter RATE_LIMIT
+        SetEnv rate-limit 400
+    </Location>
+</IfModule>
+
+# Mevcut dosya ve klasörleri atla (API dosyaları dahil)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Ana dizine yönlendirme
+RewriteRule ^(.*)$ index.php?page=$1 [QSA,L]
+
+# Güvenlik başlıkları
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com;"
+</IfModule>
+
+# Gzip sıkıştırma
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Cache kontrolü
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# PHP güvenlik ayarları
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_flag expose_php Off
+    php_value session.cookie_httponly 1
+    php_value session.use_only_cookies 1
+</IfModule>
+
